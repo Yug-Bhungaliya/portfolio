@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "dev": "cd student-portfolio && npm run dev",
+    "build": "cd student-portfolio && npm run build",
+    "preview": "cd student-portfolio && npm run preview",
+    "lint": "cd student-portfolio && npm run lint"
+  },
+  "dependencies": {
+    "@rolldown/binding-win32-x64-msvc": "^1.1.5"
+  }
+}
