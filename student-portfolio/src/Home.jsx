@@ -65,6 +65,20 @@ export default function Home() {
     setEditingTitle(task.title)
   }
 
+  async function toggleComplete(task) {
+    try {
+      const res = await fetch(`http://localhost:5000/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: task.title, completed: !task.completed })
+      })
+      if (!res.ok) throw new Error('Toggle failed')
+      await refreshTasks()
+    } catch (err) {
+      setTasksError(err.message)
+    }
+  }
+
   async function saveEdit(e) {
     e.preventDefault()
     if (!editingTitle.trim()) return
@@ -166,10 +180,12 @@ export default function Home() {
           <h2>Tasks from the API</h2>
         </div>
         <div className="tasks-list">
-          <form onSubmit={handleCreate} style={{ marginBottom: 12 }}>
-            <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="New task title" />
-            <button type="submit">Add</button>
-          </form>
+            <div className="search-wrap">
+              <form onSubmit={handleCreate} className="search-form">
+                <input className="search-input" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="New task title" />
+                <button type="submit" className="btn btn-small">Add</button>
+              </form>
+            </div>
 
           {loadingTasks && <p>Loading tasks…</p>}
           {tasksError && <p className="error">Error: {tasksError}</p>}
@@ -177,20 +193,28 @@ export default function Home() {
             <ul>
               {tasks.length === 0 && <li>No tasks yet.</li>}
               {tasks.map(t => (
-                <li key={t.id} style={{ marginBottom: 8 }}>
-                  {editingId === t.id ? (
-                    <form onSubmit={saveEdit} style={{ display: 'inline' }}>
-                      <input value={editingTitle} onChange={e => setEditingTitle(e.target.value)} />
-                      <button type="submit">Save</button>
-                      <button type="button" onClick={() => setEditingId(null)}>Cancel</button>
-                    </form>
-                  ) : (
-                    <>
-                      <strong>{t.title}</strong> — {t.completed ? 'Done' : 'Pending'}
-                      <button style={{ marginLeft: 8 }} onClick={() => startEdit(t)}>Edit</button>
-                      <button style={{ marginLeft: 6 }} onClick={() => handleDelete(t.id)}>Delete</button>
-                    </>
-                  )}
+                <li key={t.id} className="task-card">
+                  <div className="task-left">
+                    <label className="task-checkbox">
+                      <input type="checkbox" checked={t.completed} onChange={() => toggleComplete(t)} />
+                      <span className={t.completed ? 'task-completed' : ''}>{t.title}</span>
+                    </label>
+                  </div>
+
+                  <div className="task-actions">
+                    {editingId === t.id ? (
+                      <form onSubmit={saveEdit} className="inline-edit">
+                        <input className="search-input" value={editingTitle} onChange={e => setEditingTitle(e.target.value)} />
+                        <button type="submit" className="btn btn-small">Save</button>
+                        <button type="button" className="task-btn" onClick={() => setEditingId(null)}>Cancel</button>
+                      </form>
+                    ) : (
+                      <>
+                        <button className="btn btn-small" onClick={() => startEdit(t)}>Edit</button>
+                        <button className="btn btn-small" onClick={() => handleDelete(t.id)}>Delete</button>
+                      </>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
