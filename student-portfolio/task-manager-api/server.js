@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const tasksRouter = require('./routes/tasks');
 
 const app = express();
@@ -10,7 +11,6 @@ app.use(express.json());
 // Enable CORS for frontend origins used by Vite (adjust as needed)
 app.use(cors({
   origin: function (origin, callback) {
-    // allow non-browser tools like curl (no origin)
     if (!origin) return callback(null, true)
     const allowed = ['http://localhost:5173', 'http://localhost:5174']
     if (allowed.includes(origin)) return callback(null, true)
@@ -38,4 +38,14 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong' });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Connect to MongoDB then start server
+const mongoUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskmanager';
+mongoose.connect(mongoUrl)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
