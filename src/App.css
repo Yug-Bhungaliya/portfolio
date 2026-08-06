@@ -728,6 +728,17 @@ a:focus-visible {
   background-size: 18px 18px;
 }
 
+.search-input {
+  color: var(--dark);
+  caret-color: var(--primary);
+  font-size: 1rem;
+}
+
+.search-form input.search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .inline-edit {
   display: flex;
   gap: 8px;

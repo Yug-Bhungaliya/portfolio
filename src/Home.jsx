@@ -182,7 +182,7 @@ export default function Home() {
         <div className="tasks-list">
             <div className="search-wrap">
               <form onSubmit={handleCreate} className="search-form">
-                <input className="search-input" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="New task title" />
+                <input type="text" className="search-input" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="New task title" />
                 <button type="submit" className="btn btn-small">Add</button>
               </form>
             </div>
@@ -204,7 +204,7 @@ export default function Home() {
                   <div className="task-actions">
                     {editingId === t.id ? (
                       <form onSubmit={saveEdit} className="inline-edit">
-                        <input className="search-input" value={editingTitle} onChange={e => setEditingTitle(e.target.value)} />
+                        <input type="text" className="search-input" value={editingTitle} onChange={e => setEditingTitle(e.target.value)} />
                         <button type="submit" className="btn btn-small">Save</button>
                         <button type="button" className="task-btn" onClick={() => setEditingId(null)}>Cancel</button>
                       </form>
