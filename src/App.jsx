@@ -6,6 +6,7 @@ import Projects from './Projects'
 import Contact from './Contact'
 import NotFound from './NotFound'
 import Footer from './footer'
+import TaskManager from './TaskManager'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/tasks" element={<TaskManager />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
