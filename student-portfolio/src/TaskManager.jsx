@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { createTask, deleteTask, getTasks, updateTask } from './api'
 import './TaskManager.css'
 
 export default function TaskManager() {
   const [tasks, setTasks] = useState([])
-  const [loadingTasks, setLoadingTasks] = useState(false)
+  const [loadingTasks, setLoadingTasks] = useState(true)
+  const [activeAction, setActiveAction] = useState(null)
   const [tasksError, setTasksError] = useState(null)
 
   useEffect(() => {
@@ -12,10 +13,7 @@ export default function TaskManager() {
       setLoadingTasks(true)
       setTasksError(null)
       try {
-        const res = await fetch('http://localhost:5000/tasks')
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        setTasks(data)
+        setTasks(await getTasks())
       } catch (err) {
         setTasksError(err.message)
       } finally {
@@ -27,10 +25,9 @@ export default function TaskManager() {
 
   async function refreshTasks() {
     setLoadingTasks(true)
+    setTasksError(null)
     try {
-      const res = await fetch('http://localhost:5000/tasks')
-      const data = await res.json()
-      setTasks(data)
+      setTasks(await getTasks())
     } catch (err) {
       setTasksError(err.message)
     } finally {
@@ -49,25 +46,21 @@ export default function TaskManager() {
   async function handleCreate(e) {
     e.preventDefault()
     if (!newTitle.trim()) return
+    setActiveAction('create')
+    setTasksError(null)
     try {
       const payload = { title: newTitle.trim() }
       if (newDescription.trim()) payload.description = newDescription.trim()
       if (newPriority) payload.priority = newPriority
-      const res = await fetch('http://localhost:5000/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => null)
-        throw new Error(err?.error || 'Create failed')
-      }
+      await createTask(payload)
       setNewTitle('')
       setNewDescription('')
       setNewPriority('')
       await refreshTasks()
     } catch (err) {
       setTasksError(err.message)
+    } finally {
+      setActiveAction(null)
     }
   }
 
@@ -79,31 +72,27 @@ export default function TaskManager() {
   }
 
   async function toggleComplete(task) {
+    setActiveAction(`toggle-${task.id}`)
+    setTasksError(null)
     try {
-      const res = await fetch(`http://localhost:5000/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: task.title, description: task.description || '', priority: task.priority || 'medium', completed: !task.completed })
-      })
-      if (!res.ok) throw new Error('Toggle failed')
+      await updateTask(task.id, { title: task.title, description: task.description || '', priority: task.priority || 'medium', completed: !task.completed })
       await refreshTasks()
     } catch (err) {
       setTasksError(err.message)
+    } finally {
+      setActiveAction(null)
     }
   }
 
   async function saveEdit(e) {
     e.preventDefault()
     if (!editingTitle.trim()) return
+    setActiveAction(`edit-${editingId}`)
+    setTasksError(null)
     try {
       const payload = { title: editingTitle.trim(), priority: editingPriority }
       if (editingDescription.trim()) payload.description = editingDescription.trim()
-      const res = await fetch(`http://localhost:5000/tasks/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      if (!res.ok) throw new Error('Update failed')
+      await updateTask(editingId, payload)
       setEditingId(null)
       setEditingTitle('')
       setEditingDescription('')
@@ -111,17 +100,22 @@ export default function TaskManager() {
       await refreshTasks()
     } catch (err) {
       setTasksError(err.message)
+    } finally {
+      setActiveAction(null)
     }
   }
 
   async function handleDelete(id) {
     if (!confirm('Delete this task?')) return
+    setActiveAction(`delete-${id}`)
+    setTasksError(null)
     try {
-      const res = await fetch(`http://localhost:5000/tasks/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Delete failed')
+      await deleteTask(id)
       await refreshTasks()
     } catch (err) {
       setTasksError(err.message)
+    } finally {
+      setActiveAction(null)
     }
   }
 
@@ -142,7 +136,7 @@ export default function TaskManager() {
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
-            <button type="submit" className="btn btn-add">Add</button>
+            <button type="submit" className="btn btn-add" disabled={activeAction === 'create'}>{activeAction === 'create' ? 'Adding…' : 'Add'}</button>
           </form>
         </div>
 
@@ -155,7 +149,7 @@ export default function TaskManager() {
               <li key={t.id} className="task-card">
                 <div className="task-left">
                     <label className="task-checkbox">
-                      <input type="checkbox" checked={t.completed} onChange={() => toggleComplete(t)} />
+                      <input type="checkbox" checked={t.completed} disabled={activeAction === `toggle-${t.id}`} onChange={() => toggleComplete(t)} />
                     </label>
                     <div className="task-main">
                       <div className="task-header">
@@ -177,13 +171,13 @@ export default function TaskManager() {
                           <option value="medium">Medium</option>
                           <option value="high">High</option>
                         </select>
-                        <button type="submit" className="btn btn-small">Save</button>
+                        <button type="submit" className="btn btn-small" disabled={activeAction === `edit-${t.id}`}>{activeAction === `edit-${t.id}` ? 'Saving…' : 'Save'}</button>
                         <button type="button" className="task-btn" onClick={() => setEditingId(null)}>Cancel</button>
                     </form>
                   ) : (
                     <>
-                        <button className="btn btn-small" onClick={() => startEdit(t)}>✏️ Edit</button>
-                        <button className="btn btn-small" onClick={() => handleDelete(t.id)}>🗑️ Delete</button>
+                        <button className="btn btn-small" disabled={activeAction !== null} onClick={() => startEdit(t)}>✏️ Edit</button>
+                        <button className="btn btn-small" disabled={activeAction === `delete-${t.id}`} onClick={() => handleDelete(t.id)}>{activeAction === `delete-${t.id}` ? 'Deleting…' : '🗑️ Delete'}</button>
                     </>
                   )}
                 </div>
