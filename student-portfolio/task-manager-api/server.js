@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+require('dotenv').config();
 const tasksRouter = require('./routes/tasks');
 
 const app = express();
@@ -35,11 +36,19 @@ app.use((req, res) => {
 // Global error handler (must be last)
 app.use((err, req, res, next) => {
   console.error(err);
+  // Mongoose validation errors -> structured JSON
+  if (err.name === 'ValidationError') {
+    const details = Object.keys(err.errors).map(field => ({ field, message: err.errors[field].message }));
+    return res.status(400).json({ error: 'Validation Error', details });
+  }
+  if (err.name === 'CastError') {
+    return res.status(400).json({ error: 'Invalid ID', message: err.message });
+  }
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong' });
 });
 
 // Connect to MongoDB then start server
-const mongoUrl = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskmanager';
+const mongoUrl = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskmanager';
 mongoose.connect(mongoUrl)
   .then(() => {
     console.log('Connected to MongoDB');

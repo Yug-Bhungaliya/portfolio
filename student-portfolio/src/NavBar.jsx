@@ -21,6 +21,11 @@ export default function NavBar() {
             </NavLink>
           </li>
           <li>
+            <NavLink to="/tasks" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              Tasks
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/contact" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Contact
             </NavLink>

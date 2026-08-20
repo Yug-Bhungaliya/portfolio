@@ -27,7 +27,7 @@ router.use(requireJsonContent);
 router.get('/', async (req, res, next) => {
   try {
     const docs = await Task.find().lean();
-    const mapped = docs.map(d => ({ id: d._id, title: d.title, completed: d.completed }));
+    const mapped = docs.map(d => ({ id: d._id, title: d.title, description: d.description || '', completed: d.completed, priority: d.priority, createdAt: d.createdAt }));
     res.status(200).json(mapped);
   } catch (err) { next(err) }
 });
@@ -35,20 +35,22 @@ router.get('/', async (req, res, next) => {
 // POST /tasks
 router.post('/', async (req, res, next) => {
   try {
-    const { title, completed = false } = req.body;
-    if (!title) return res.status(400).json({ error: 'Title is required' });
-    const created = await Task.create({ title, completed });
-    res.status(201).json({ id: created._id, title: created.title, completed: created.completed });
+    const { title, description = '', completed = false, priority = 'medium' } = req.body;
+    const created = await Task.create({ title, description, completed, priority });
+    res.status(201).json({ id: created._id, title: created.title, description: created.description, completed: created.completed, priority: created.priority, createdAt: created.createdAt });
   } catch (err) { next(err) }
 });
 
 // PUT /tasks/:id
 router.put('/:id', validateId, async (req, res, next) => {
   try {
-    const { title, completed } = req.body;
-    if (!title) return res.status(400).json({ error: 'Title is required' });
-    const updated = await Task.findByIdAndUpdate(req.params.id, { title, completed: Boolean(completed) }, { new: true }).lean();
-    res.status(200).json({ id: updated._id, title: updated.title, completed: updated.completed });
+    const updates = {};
+    ['title', 'description', 'completed', 'priority'].forEach(k => {
+      if (req.body[k] !== undefined) updates[k] = req.body[k];
+    });
+    const updated = await Task.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true, context: 'query' }).lean();
+    if (!updated) return res.status(404).json({ error: 'Task not found' });
+    res.status(200).json({ id: updated._id, title: updated.title, description: updated.description, completed: updated.completed, priority: updated.priority, createdAt: updated.createdAt });
   } catch (err) { next(err) }
 });
 
@@ -57,6 +59,14 @@ router.delete('/:id', validateId, async (req, res, next) => {
   try {
     await Task.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: 'Task deleted' });
+  } catch (err) { next(err) }
+});
+
+// GET /tasks/:id
+router.get('/:id', validateId, async (req, res, next) => {
+  try {
+    const d = req.task;
+    res.status(200).json({ id: d._id, title: d.title, description: d.description || '', completed: d.completed, priority: d.priority, createdAt: d.createdAt });
   } catch (err) { next(err) }
 });
 
