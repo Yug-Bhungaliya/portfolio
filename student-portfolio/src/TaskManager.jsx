@@ -1,14 +1,25 @@
 import React, { useEffect, useState } from 'react'
 import { createTask, deleteTask, getTasks, updateTask } from './api'
+import Auth from './Auth'
 import './TaskManager.css'
 
 export default function TaskManager() {
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(localStorage.getItem('taskManagerToken')))
   const [tasks, setTasks] = useState([])
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [activeAction, setActiveAction] = useState(null)
   const [tasksError, setTasksError] = useState(null)
+  const [newTitle, setNewTitle] = useState('')
+  const [newDescription, setNewDescription] = useState('')
+  const [newPriority, setNewPriority] = useState('')
+  const [editingId, setEditingId] = useState(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const [editingDescription, setEditingDescription] = useState('')
+  const [editingPriority, setEditingPriority] = useState('medium')
 
   useEffect(() => {
+    if (!isAuthenticated) return
+
     async function loadTasks() {
       setLoadingTasks(true)
       setTasksError(null)
@@ -21,7 +32,15 @@ export default function TaskManager() {
       }
     }
     loadTasks()
-  }, [])
+  }, [isAuthenticated])
+
+  function handleLogout() {
+    localStorage.removeItem('taskManagerToken')
+    setIsAuthenticated(false)
+    setTasks([])
+  }
+
+  if (!isAuthenticated) return <Auth onAuthenticated={() => setIsAuthenticated(true)} />
 
   async function refreshTasks() {
     setLoadingTasks(true)
@@ -34,14 +53,6 @@ export default function TaskManager() {
       setLoadingTasks(false)
     }
   }
-
-  const [newTitle, setNewTitle] = useState('')
-  const [newDescription, setNewDescription] = useState('')
-  const [newPriority, setNewPriority] = useState('')
-  const [editingId, setEditingId] = useState(null)
-  const [editingTitle, setEditingTitle] = useState('')
-  const [editingDescription, setEditingDescription] = useState('')
-  const [editingPriority, setEditingPriority] = useState('medium')
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -124,6 +135,7 @@ export default function TaskManager() {
       <div className="section-heading">
         <p className="eyebrow">Tasks</p>
         <h2>Tasks from the API</h2>
+        <button type="button" className="task-btn" onClick={handleLogout}>Logout</button>
       </div>
       <div className="tasks-list">
         <div className="search-wrap">
