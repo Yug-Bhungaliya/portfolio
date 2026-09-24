@@ -1,7 +1,13 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 async function request(path, options = {}) {
-  const response = await fetch(`${BASE_URL}${path}`, options)
+  const token = localStorage.getItem('taskManagerToken')
+  const headers = {
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  }
+  const response = await fetch(`${BASE_URL}${path}`, { ...options, headers })
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
@@ -10,6 +16,16 @@ async function request(path, options = {}) {
 
   return data
 }
+
+export const register = credentials => request('/auth/register', {
+  method: 'POST',
+  body: JSON.stringify(credentials)
+})
+
+export const login = credentials => request('/auth/login', {
+  method: 'POST',
+  body: JSON.stringify(credentials)
+})
 
 export const getTasks = () => request('/tasks')
 
