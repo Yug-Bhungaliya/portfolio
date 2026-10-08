@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const authRouter = require('./routes/auth');
 const tasksRouter = require('./routes/tasks');
+const cache = require('./cache');
+require('./listeners');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +27,14 @@ app.use((req, res, next) => {
 
 app.use('/auth', authRouter);
 app.use('/tasks', tasksRouter);
+app.get('/cache-stats', (_req, res) => {
+  const stats = cache.getStats();
+  res.json({
+    hits: stats.hits,
+    keys: cache.keys(),
+    misses: stats.misses
+  });
+});
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found', message: 'Route does not exist' });
