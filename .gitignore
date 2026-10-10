@@ -26,3 +26,5 @@ dist-ssr
 # Environment files
 .env
 task-manager-api/.env
+task-manager-api/.env.*
+!task-manager-api/.env.example

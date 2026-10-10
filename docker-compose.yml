@@ -17,6 +17,9 @@ services:
   backend:
     build:
       context: ./task-manager-api
+    env_file:
+      - path: ./task-manager-api/.env
+        required: false
     restart: unless-stopped
     environment:
       MONGO_URI: mongodb://mongodb:27017/taskdb

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { createTask, deleteTask, getTasks, updateTask } from './api'
+import { createTask, deleteTask, generateTaskDescription, getTasks, updateTask } from './api'
 import Auth from './Auth'
 import './TaskManager.css'
 
@@ -11,6 +11,7 @@ export default function TaskManager() {
   const [tasksError, setTasksError] = useState(null)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
+  const [aiSuggestionMessage, setAiSuggestionMessage] = useState('')
   const [newPriority, setNewPriority] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingTitle, setEditingTitle] = useState('')
@@ -66,10 +67,36 @@ export default function TaskManager() {
       await createTask(payload)
       setNewTitle('')
       setNewDescription('')
+      setAiSuggestionMessage('')
       setNewPriority('')
       await refreshTasks()
     } catch (err) {
       setTasksError(err.message)
+    } finally {
+      setActiveAction(null)
+    }
+
+  }
+
+  async function handleGenerateDescription() {
+    if (!newTitle.trim()) {
+      setAiSuggestionMessage('Enter a task title first.')
+      return
+    }
+    setActiveAction('generate-description')
+    setAiSuggestionMessage('')
+    try {
+      const result = await generateTaskDescription(newTitle.trim())
+      if (result.description) {
+        setNewDescription(result.description)
+        setAiSuggestionMessage(result.demo
+          ? 'Demo suggestion added. You can edit it before saving.'
+          : 'AI suggestion added. You can edit it before saving.')
+      } else {
+        setAiSuggestionMessage(result.message || 'AI suggestions are unavailable. Enter the description manually.')
+      }
+    } catch {
+      setAiSuggestionMessage('AI suggestions are unavailable. Enter the description manually.')
     } finally {
       setActiveAction(null)
     }
@@ -141,7 +168,12 @@ export default function TaskManager() {
         <div className="search-wrap">
           <form onSubmit={handleCreate} className="search-form">
             <input type="text" className="search-input search-title" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="New task title" />
-            <input type="text" className="search-input search-desc" value={newDescription} onChange={e => setNewDescription(e.target.value)} placeholder="Short description (optional)" />
+            <div className="description-generator">
+              <textarea className="search-input search-desc" value={newDescription} onChange={e => setNewDescription(e.target.value)} placeholder="Short description (optional)" rows="2" />
+              <button type="button" className="btn btn-small" onClick={handleGenerateDescription} disabled={activeAction !== null}>
+                {activeAction === 'generate-description' ? 'Generating…' : '✨ Generate description'}
+              </button>
+            </div>
             <select value={newPriority} onChange={e => setNewPriority(e.target.value)} className="priority-select">
               <option value="" disabled>Priority</option>
               <option value="low">Low</option>
@@ -150,6 +182,7 @@ export default function TaskManager() {
             </select>
             <button type="submit" className="btn btn-add" disabled={activeAction === 'create'}>{activeAction === 'create' ? 'Adding…' : 'Add'}</button>
           </form>
+          {aiSuggestionMessage && <p className="ai-suggestion-message" role="status">{aiSuggestionMessage}</p>}
         </div>
 
         {loadingTasks && <p>Loading tasks…</p>}

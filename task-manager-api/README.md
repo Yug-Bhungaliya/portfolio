@@ -32,6 +32,20 @@ Task endpoints:
 - `PUT /tasks/:id` — update task (JSON body with any of `title`, `description`, `completed`, or `priority`)
 - `DELETE /tasks/:id` — delete task
 
+## AI task descriptions
+
+The authenticated `POST /api/ai/generate-description` endpoint accepts a task
+title and uses OpenAI to suggest a short description:
+
+```json
+{ "title": "Review pull request" }
+```
+
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` on the backend only.
+The key is never sent to the React frontend. If the key is missing, invalid, or
+the OpenAI request times out, the endpoint returns a fallback response and the
+user can continue entering a description manually.
+
 Notes:
 
 - Requests to `POST`/`PUT` must include `Content-Type: application/json` header.

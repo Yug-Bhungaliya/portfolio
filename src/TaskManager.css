@@ -34,7 +34,8 @@
 }
 
 .search-form {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(260px, 2fr) minmax(172px, auto) 140px auto;
     gap: 12px;
     width: 100%;
     align-items: center
@@ -51,6 +52,13 @@
     height: 48px
 }
 
+.search-desc {
+    resize: vertical;
+    min-height: 48px;
+    height: auto;
+    line-height: 1.35;
+}
+
 .search-title {
     flex: 2 1 280px;
     min-width: 220px
@@ -59,6 +67,30 @@
 .search-desc {
     flex: 3 1 360px;
     min-width: 220px
+}
+
+.description-generator {
+    display: contents;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.description-generator .search-desc {
+    min-width: 0;
+    width: 100%;
+}
+
+.description-generator .btn-small {
+    white-space: nowrap;
+    min-width: 172px;
+}
+
+.ai-suggestion-message {
+    margin: 8px 0 0;
+    color: var(--tm-muted);
+    font-size: 13px;
 }
 
 .priority-select {
@@ -273,8 +305,30 @@
 
 @media (max-width:640px) {
     .search-form {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         align-items: stretch
+    }
+
+    .description-generator {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .description-generator .btn-small {
+        width: 100%;
+    }
+
+}
+
+@media (min-width:641px) and (max-width:980px) {
+    .search-form {
+        grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.5fr) minmax(172px, auto);
+    }
+
+    .priority-select,
+    .btn-add {
+        width: 100%;
     }
 
     .task-card {

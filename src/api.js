@@ -35,6 +35,11 @@ export const createTask = task => request('/tasks', {
   body: JSON.stringify(task)
 })
 
+export const generateTaskDescription = title => request('/api/ai/generate-description', {
+  method: 'POST',
+  body: JSON.stringify({ title })
+})
+
 export const updateTask = (id, task) => request(`/tasks/${id}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
