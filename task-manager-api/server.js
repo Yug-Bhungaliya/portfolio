@@ -50,13 +50,18 @@ app.use((err, req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong' });
 });
 
-const mongoUrl = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/taskmanager';
-mongoose.connect(mongoUrl)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch(err => {
+async function startServer() {
+  const mongoUrl = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://mongodb:27017/taskdb';
+  await mongoose.connect(mongoUrl);
+  console.log('Connected to MongoDB');
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+if (require.main === module) {
+  startServer().catch(err => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+}
+
+module.exports = { app, startServer };
